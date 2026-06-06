@@ -39,7 +39,7 @@ jobs:
       - name: Wait for checkout service
         run: |
           for i in {1..30}; do
-            if curl -s -o /dev/null http://localhost:4000/checkout-api/v1/checkout; then
+            if curl -s -o /dev/null http://localhost:4000/health; then
               echo "Checkout service is reachable"
               exit 0
             fi
@@ -55,6 +55,8 @@ jobs:
           exit 1
 
       - name: Run E2E tests
+        env:
+          CHECKOUT_BASE_URL: http://localhost:4000
         run: |
           go test ./tests/e2e -v
 

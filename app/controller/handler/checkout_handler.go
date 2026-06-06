@@ -48,3 +48,7 @@ func (c checkoutHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 
 	httpresponse2.Response(w, resp, status)
 }
+
+func (c checkoutHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Server is Running!"))
+}

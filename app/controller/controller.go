@@ -36,6 +36,7 @@ func (c *Controller) StartRoute(app *newrelic.Application) *http.Server {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Middleware(app))
+	r.Get("/health", c.checkoutHandler.HealthCheck)
 
 	r.Route("/checkout-api/v1", func(r chi.Router) {
 		r.Use(middleware.GetLogMiddleware(*c.cfg))

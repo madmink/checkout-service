@@ -6,6 +6,7 @@ import (
 	appresponse "checkout-service/app/model/response"
 	"encoding/json"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 )
 
 const (
-	baseURL         = "http://localhost:4000"
 	checkoutAPIPath = "/checkout-api/v1/checkout"
 
 	headerContentType = "Content-Type"
@@ -234,6 +234,15 @@ func TestE2E_Checkout_WithRequestIDHeader_ShouldReturnSameRequestID(t *testing.T
 	assertRequestIDHeader(t, result, requestID)
 }
 
+func checkoutBaseURL() string {
+	baseURL := os.Getenv("CHECKOUT_BASE_URL")
+	if baseURL == "" {
+		return "http://localhost:4000"
+	}
+
+	return baseURL
+}
+
 func doCheckoutE2E(
 	t *testing.T,
 	requestID string,
@@ -252,7 +261,7 @@ func doCheckoutE2E(
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		baseURL+checkoutAPIPath,
+		checkoutBaseURL()+checkoutAPIPath,
 		bytes.NewReader(bodyBytes),
 	)
 	if err != nil {
