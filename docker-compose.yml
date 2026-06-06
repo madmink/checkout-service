@@ -1,0 +1,50 @@
+services:
+  checkout-db:
+    image: postgres:16-alpine
+    container_name: checkout-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: checkout_user
+      POSTGRES_PASSWORD: checkout_password
+      POSTGRES_DB: checkout_service_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - checkout_db_data:/var/lib/postgresql/data
+      - ./migration:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U checkout_user -d checkout_service_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  checkout-test:
+    image: golang:1.25-alpine
+    container_name: checkout-test
+    working_dir: /app
+    depends_on:
+      checkout-db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: sh -c "apk add --no-cache git && go mod download && go test $(go list ./... | grep -v '/tests/e2e')"
+
+  checkout-service:
+    build:
+      context: .
+      dockerfile: DockerFile
+    container_name: checkout-service
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+      - "9090:9090"
+    depends_on:
+      checkout-db:
+        condition: service_healthy
+      checkout-test:
+        condition: service_completed_successfully
+    volumes:
+      - ./config/application_docker.json:/app/application_docker.json:ro
+
+volumes:
+  checkout_db_data:

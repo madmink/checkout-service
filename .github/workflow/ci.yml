@@ -1,0 +1,69 @@
+name: Checkout Service CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  test:
+    name: Unit Test, Docker Build, and E2E Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.9'
+
+      - name: Download Go dependencies
+        run: go mod download
+
+      - name: Check Go formatting
+        run: |
+          test -z "$(gofmt -l .)"
+
+      - name: Run unit tests without E2E
+        run: |
+          go test $(go list ./... | grep -v '/tests/e2e') -v
+
+      - name: Start database, unit-test container, and checkout service
+        run: |
+          docker compose up -d --build checkout-service
+
+      - name: Wait for checkout service
+        run: |
+          for i in {1..30}; do
+            if curl -s -o /dev/null http://localhost:4000/checkout-api/v1/checkout; then
+              echo "Checkout service is reachable"
+              exit 0
+            fi
+
+            echo "Waiting for checkout service..."
+            docker compose ps
+            docker compose logs --tail=50 checkout-service || true
+            sleep 2
+          done
+
+          echo "Checkout service failed to become reachable"
+          docker compose logs
+          exit 1
+
+      - name: Run E2E tests
+        run: |
+          go test ./tests/e2e -v
+
+      - name: Show Docker logs if failed
+        if: failure()
+        run: |
+          docker compose logs
+
+      - name: Stop Docker Compose
+        if: always()
+        run: |
+          docker compose down -v
