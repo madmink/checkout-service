@@ -1,0 +1,35 @@
+{
+  "context_timeout": 30,
+  "port": {
+    "host": "0.0.0.0",
+    "service": 4000,
+    "servicetimeout": 20,
+    "profiler": 9090,
+    "profilertimeout": 300
+  },
+  "database": {
+    "checkout_database": {
+      "username": "checkout_user",
+      "password": "checkout_password",
+      "hostname": "checkout-db:5432",
+      "dbname": "checkout_service_db",
+      "sslmode": "disable",
+      "timeout": 15,
+      "maxopenconns": 10,
+      "maxidleconns": 5,
+      "connmaxlifetime": 5
+    }
+  },
+  "newrelic": {
+    "isActive": false,
+    "name": "checkout-service",
+    "license_key": "",
+    "ingest_key": "",
+    "region": "US"
+  },
+  "log": {
+    "request": true,
+    "success_response": true,
+    "failed_response": true
+  }
+}
